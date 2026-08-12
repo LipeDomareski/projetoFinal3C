@@ -160,3 +160,4 @@ docker compose exec backend php artisan migrate:fresh --seed
 
 **Atenção:** `migrate:fresh` apaga os dados existentes.
 # projetoFinal3C
+# projetoFinal3C
