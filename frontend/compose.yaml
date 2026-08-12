@@ -1,11 +1,21 @@
 services:
+
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+
     container_name: carhub-frontend
-    restart: unless-stopped
+
     ports:
       - "5173:5173"
+
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
+      VITE_API_URL: http://localhost:8080/api
+
+volumes:
+  node_modules:
