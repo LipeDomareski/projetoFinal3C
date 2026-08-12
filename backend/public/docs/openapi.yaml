@@ -1,0 +1,459 @@
+openapi: 3.0.3
+info:
+  title: CarHub API
+  version: 1.0.0
+  description: API REST do projeto CarHub.
+servers:
+  - url: http://localhost:8000/api
+    description: Ambiente local
+
+tags:
+  - name: Auth
+  - name: Profile
+  - name: Users
+  - name: Posts
+  - name: Comments
+  - name: Likes
+  - name: Feed
+  - name: Stories
+
+paths:
+  /register:
+    post:
+      tags: [Auth]
+      summary: Registrar usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, username, email, password, password_confirmation]
+              properties:
+                name: { type: string }
+                username: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                password_confirmation: { type: string, minLength: 8 }
+      responses:
+        '201': { description: Usuário criado }
+        '422': { description: Erro de validação }
+
+  /login:
+    post:
+      tags: [Auth]
+      summary: Fazer login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login realizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/User' }
+        '401': { description: Credenciais inválidas }
+        '422': { description: Erro de validação }
+
+  /logout:
+    post:
+      tags: [Auth]
+      summary: Encerrar sessão atual
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Logout realizado }
+        '401': { description: Não autenticado }
+
+  /profile:
+    get:
+      tags: [Profile]
+      summary: Obter perfil autenticado
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Perfil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/UserProfile' }
+        '401': { description: Não autenticado }
+    put:
+      tags: [Profile]
+      summary: Atualizar perfil
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                username: { type: string }
+                bio: { type: string, nullable: true }
+                profile_photo:
+                  type: string
+                  format: binary
+      responses:
+        '200': { description: Perfil atualizado }
+        '401': { description: Não autenticado }
+        '422': { description: Erro de validação }
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Listar ou pesquisar usuários
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+          description: Nome ou username
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 50 }
+      responses:
+        '200': { description: Lista de usuários }
+        '401': { description: Não autenticado }
+
+  /users/suggestions:
+    get:
+      tags: [Users]
+      summary: Listar sugestões de usuários que ainda não são seguidos
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 20, default: 5 }
+      responses:
+        '200': { description: Sugestões de usuários }
+        '401': { description: Não autenticado }
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Obter perfil de usuário
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200': { description: Perfil encontrado }
+        '404': { description: Usuário não encontrado }
+
+  /users/{userId}/follow:
+    post:
+      tags: [Users]
+      summary: Seguir usuário
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200': { description: Usuário seguido }
+        '422': { description: Tentativa de seguir a si mesmo }
+    delete:
+      tags: [Users]
+      summary: Deixar de seguir usuário
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200': { description: Follow removido }
+
+  /users/{userId}/followers:
+    get:
+      tags: [Users]
+      summary: Listar seguidores
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200': { description: Lista de seguidores }
+
+  /users/{userId}/following:
+    get:
+      tags: [Users]
+      summary: Listar usuários seguidos
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200': { description: Lista de usuários seguidos }
+
+  /posts:
+    get:
+      tags: [Posts]
+      summary: Listar posts
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200': { description: Lista paginada de posts }
+    post:
+      tags: [Posts]
+      summary: Criar post
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                caption:
+                  type: string
+                  maxLength: 2200
+      responses:
+        '201': { description: Post criado }
+        '422': { description: Erro de validação }
+
+  /posts/{postId}:
+    get:
+      tags: [Posts]
+      summary: Obter post
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '200': { description: Post encontrado }
+        '404': { description: Post não encontrado }
+    put:
+      tags: [Posts]
+      summary: Atualizar post próprio
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                caption: { type: string, nullable: true }
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200': { description: Post atualizado }
+        '403': { description: Sem permissão }
+        '422': { description: Erro de validação }
+    delete:
+      tags: [Posts]
+      summary: Excluir post próprio
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '200': { description: Post excluído }
+        '403': { description: Sem permissão }
+
+  /posts/{postId}/like:
+    post:
+      tags: [Likes]
+      summary: Curtir post
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '200': { description: Post curtido }
+    delete:
+      tags: [Likes]
+      summary: Remover curtida
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '200': { description: Curtida removida }
+
+  /posts/{postId}/comments:
+    get:
+      tags: [Comments]
+      summary: Listar comentários do post
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      responses:
+        '200': { description: Comentários }
+    post:
+      tags: [Comments]
+      summary: Comentar em um post
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/PostId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string, maxLength: 1000 }
+      responses:
+        '201': { description: Comentário criado }
+        '422': { description: Erro de validação }
+
+  /comments/{commentId}:
+    put:
+      tags: [Comments]
+      summary: Editar comentário próprio
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string, maxLength: 1000 }
+      responses:
+        '200': { description: Comentário atualizado }
+        '404': { description: Comentário não encontrado }
+    delete:
+      tags: [Comments]
+      summary: Excluir comentário próprio
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      responses:
+        '200': { description: Comentário excluído }
+        '404': { description: Comentário não encontrado }
+
+  /feed:
+    get:
+      tags: [Feed]
+      summary: Feed do usuário autenticado
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200': { description: Feed paginado }
+
+  /stories:
+    get:
+      tags: [Stories]
+      summary: Listar stories ativos
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Stories não expirados }
+    post:
+      tags: [Stories]
+      summary: Criar story com expiração em 24 horas
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201': { description: Story criado }
+
+  /stories/{storyId}:
+    get:
+      tags: [Stories]
+      summary: Obter story ativo
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StoryId'
+      responses:
+        '200': { description: Story encontrado }
+        '404': { description: Story inexistente ou expirado }
+    delete:
+      tags: [Stories]
+      summary: Excluir story próprio
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/StoryId'
+      responses:
+        '200': { description: Story excluído }
+        '403': { description: Sem permissão }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: integer }
+    PostId:
+      name: postId
+      in: path
+      required: true
+      schema: { type: integer }
+    CommentId:
+      name: commentId
+      in: path
+      required: true
+      schema: { type: integer }
+    StoryId:
+      name: storyId
+      in: path
+      required: true
+      schema: { type: integer }
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        username: { type: string }
+        bio: { type: string, nullable: true }
+        profile_photo: { type: string, nullable: true }
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            posts_count: { type: integer }
+            followers_count: { type: integer }
+            following_count: { type: integer }
+            is_me: { type: boolean }
+            is_following: { type: boolean }
+
+    Post:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: integer }
+        caption: { type: string, nullable: true }
+        image: { type: string }
+        liked_by_count: { type: integer }
+        comments_count: { type: integer }
+        liked_by_me: { type: boolean }

@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+    margin: 0;
+    min-height: 100%;
+    width: 100%;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #fafafa;
+    color: #111;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+/* LOGIN */
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.login-card h1 {
+    margin: 0 0 8px;
+    font-size: 36px;
+}
+
+.login-card > p {
+    color: #666;
+}
+
+.login-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 28px 0;
+}
+
+.login-card input {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+    background: #fafafa;
+}
+
+.login-card input:focus {
+    border-color: #999;
+}
+
+.login-card button {
+    padding: 13px;
+    border: none;
+    border-radius: 6px;
+    background: #111;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.login-card button:hover {
+    opacity: 0.9;
+}
+
+.login-card button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.login-card a {
+    color: #111;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.error {
+    color: #d00;
+    margin: 0;
+}
+
+/* MOBILE */
+
+@media (max-width: 500px) {
+    .login-page {
+        padding: 15px;
+        align-items: flex-start;
+        padding-top: 80px;
+    }
+
+    .login-card {
+        border: none;
+        padding: 25px 15px;
+        background: transparent;
+    }
+
+    .login-card h1 {
+        font-size: 32px;
+    }
+}
